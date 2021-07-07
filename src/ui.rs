@@ -49,12 +49,7 @@ pub fn draw_ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<
         let min_volt = 12000.0;         //min voltage to say that it is 0% battery 
         let mut pack_voltage = Vec::new();
 
-        let total_ampere= 5000.0;
-        let min_ampere = 3000.0;         //min current to say that it is 0% battery 
-        let mut pack_ampere = Vec::new();
-
         let mut volt_style = vec![Color::Green, Color::Green, Color::Green, Color::Green];
-        let mut amp_style = vec![Color::Green, Color::Green, Color::Green, Color::Green];
 
         let mut tl_cell = Vec::new();
         let mut tr_cell = Vec::new();
@@ -65,34 +60,22 @@ pub fn draw_ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<
 
         for i in 1..5 {
             match i {
-                1 => { 
-                        pack_voltage.push(map_range((min_volt as f64, total_voltage as f64), (0.0, 100.0), app.tl_pack_voltage.into())); 
-                        pack_ampere.push(map_range((min_ampere as f64, total_ampere as f64), (0.0, 100.0), app.tl_pack_ampere.into())); 
+                1 => {  pack_voltage.push(map_range((min_volt as f64, total_voltage as f64), (0.0, 100.0), app.tl_pack_voltage.into())); 
                         if !app.tl_cell_voltages.is_empty() {
-                            tl_cell = cell_data(app.tl_cell_voltages.clone(), app.counter.clone());
-                        }
-                    }
-                2 => { 
-                        pack_voltage.push(map_range((min_volt as f64, total_voltage as f64), (0.0, 100.0), app.tr_pack_voltage.into())); 
-                        pack_ampere.push(map_range((min_ampere as f64, total_ampere as f64), (0.0, 100.0), app.tr_pack_ampere.into())); 
+                            tl_cell = cell_data(app.tl_cell_voltages.clone(), app.counter.clone(), pack_voltage[i-1] as u32);
+                        }  }
+                2 => {  pack_voltage.push(map_range((min_volt as f64, total_voltage as f64), (0.0, 100.0), app.tr_pack_voltage.into())); 
                         if !app.tr_cell_voltages.is_empty() {
-                            tr_cell = cell_data(app.tr_cell_voltages.clone(), app.counter.clone());
-                        }
-                    }
-                3 => { 
-                        pack_voltage.push(map_range((min_volt as f64, total_voltage as f64), (0.0, 100.0), app.bl_pack_voltage.into())); 
-                        pack_ampere.push(map_range((min_ampere as f64, total_ampere as f64), (0.0, 100.0), app.bl_pack_ampere.into())); 
+                            tr_cell = cell_data(app.tr_cell_voltages.clone(), app.counter.clone(), pack_voltage[i-1] as u32);
+                        }  }
+                3 => {  pack_voltage.push(map_range((min_volt as f64, total_voltage as f64), (0.0, 100.0), app.bl_pack_voltage.into())); 
                         if !app.bl_cell_voltages.is_empty() {
-                            bl_cell = cell_data(app.bl_cell_voltages.clone(), app.counter.clone());
-                        }
-                    }
-                4 => { 
-                        pack_voltage.push(map_range((min_volt as f64, total_voltage as f64), (0.0, 100.0), app.br_pack_voltage.into())); 
-                        pack_ampere.push(map_range((min_ampere as f64, total_ampere as f64), (0.0, 100.0), app.br_pack_ampere.into())); 
+                            bl_cell = cell_data(app.bl_cell_voltages.clone(), app.counter.clone(), pack_voltage[i-1] as u32);
+                        }  }
+                4 => {  pack_voltage.push(map_range((min_volt as f64, total_voltage as f64), (0.0, 100.0), app.br_pack_voltage.into())); 
                         if !app.br_cell_voltages.is_empty() {
-                            br_cell = cell_data(app.br_cell_voltages.clone(), app.counter.clone());
-                        }
-                }
+                            br_cell = cell_data(app.br_cell_voltages.clone(), app.counter.clone(), pack_voltage[i-1] as u32);
+                        }  }
                 _ => { },
             }
         }
@@ -103,12 +86,6 @@ pub fn draw_ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<
                 volt_style[i] = Color::Red;
             } else {
                 volt_style[i] = Color::Green;  
-            }
-
-            if pack_ampere[i] < 20.0 {
-                amp_style[i] = Color::Red;
-            } else {
-                amp_style[i] = Color::Green;  
             }
         }
 
@@ -141,30 +118,26 @@ pub fn draw_ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<
         let chunk_style = |title| {
             Block::default()
                 .borders(Borders::ALL)
+                .border_type(BorderType::Rounded)
                 .style(Style::default().fg(Color::White))
                 .title(Span::styled(title, Style::default().add_modifier(Modifier::BOLD)))
             };
 
-        //PACK VOLTAGE ************************************************
-        let label = format!("{}% | {}mV", pack_voltage[index_tl] as u16, app.tl_pack_voltage);
+        //BATTERY  ************************************************
+        let label = format!("{}{}", pack_voltage[index_tl] as u16, "%");
         let pack_volt = Gauge::default()
-            .block(chunk_style(" Pack Voltage: "))
+            .block(chunk_style(""))
             .gauge_style(Style::default().fg(volt_style[index_tl]).bg(Color::Black).add_modifier(Modifier::ITALIC))
             .percent((pack_voltage[index_tl] as i32).try_into().unwrap())
             .label(label)
             .use_unicode(true);
         f.render_widget(pack_volt, tl_chunk[0]);
 
-        //PACK CURRENT ************************************************
-        // let label = format!("{}{}", pack_ampere[index_tl] as u16, "%");
-        let label = format!("{} mA", app.tl_pack_ampere as u16);
-        let pack_amp = Gauge::default()
-            .block(chunk_style(" Pack Current: "))
-            .gauge_style(Style::default().fg(amp_style[index_tl]).bg(Color::Black).add_modifier(Modifier::ITALIC))
-            .percent((pack_ampere[index_tl] as i32).try_into().unwrap())
-            .label(label)
-            .use_unicode(true);
-        f.render_widget(pack_amp, tl_chunk[1]);
+        //PACK INFO ************************************************
+        let tl_msg = Paragraph::new(pack_info(vec![app.tl_pack_voltage, app.tl_pack_ampere as u32]))
+            .style(Style::default())
+            .alignment(Alignment::Left);
+        f.render_widget(tl_msg, tl_chunk[1]);
 
         //CELL VOLTAGES
         let tl_msg = Paragraph::new(tl_cell.clone())
@@ -190,26 +163,21 @@ pub fn draw_ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<
             .margin(1)
             .split(chunk0[index_tr]);
 
-        //PACK VOLTAGE ************************************************
-        let label = format!("{}% | {}mV", pack_voltage[index_tr] as u16, app.tr_pack_voltage);
+        //BATTERY  ************************************************
+        let label = format!("{}{}", pack_voltage[index_tr] as u16, "%");
         let pack_volt = Gauge::default()
-            .block(chunk_style(" Pack Voltage: "))
+            .block(chunk_style(""))
             .gauge_style(Style::default().fg(volt_style[index_tr]).bg(Color::Black).add_modifier(Modifier::ITALIC))
             .percent((pack_voltage[index_tr] as i32).try_into().unwrap())
             .label(label)
             .use_unicode(true);
         f.render_widget(pack_volt, tr_chunk[0]);
 
-        //PACK CURRENT ************************************************
-        // let label = format!("{}{}", pack_ampere[index_tr] as u16, "%");
-        let label = format!("{} mA", app.tr_pack_ampere as u16);
-        let pack_amp = Gauge::default()
-            .block(chunk_style(" Pack Current: "))
-            .gauge_style(Style::default().fg(amp_style[index_tr]).bg(Color::Black).add_modifier(Modifier::ITALIC))
-            .percent((pack_ampere[index_tr] as i32).try_into().unwrap())
-            .label(label)
-            .use_unicode(true);
-        f.render_widget(pack_amp, tr_chunk[1]);
+        //PACK INFO ************************************************
+        let tr_msg = Paragraph::new(pack_info(vec![app.tr_pack_voltage, app.tr_pack_ampere as u32]))
+            .style(Style::default())
+            .alignment(Alignment::Left);
+        f.render_widget(tr_msg, tr_chunk[1]);
 
         //CELL VOLTAGES
         let tr_msg = Paragraph::new(tr_cell.clone())
@@ -235,26 +203,21 @@ pub fn draw_ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<
             .margin(1)
             .split(chunk0[index_bl]);
 
-        //PACK VOLTAGE ************************************************
-        let label = format!("{}% | {}mV", pack_voltage[index_bl] as u16, app.bl_pack_voltage);
+        //BATTERY  ************************************************
+        let label = format!("{}{}", pack_voltage[index_bl] as u16, "%");
         let pack_volt = Gauge::default()
-            .block(chunk_style(" Pack Voltage: "))
+            .block(chunk_style(""))
             .gauge_style(Style::default().fg(volt_style[index_bl]).bg(Color::Black).add_modifier(Modifier::ITALIC))
             .percent((pack_voltage[index_bl] as i32).try_into().unwrap())
             .label(label)
             .use_unicode(true);
         f.render_widget(pack_volt, bl_chunk[0]);
 
-        //PACK CURRENT ************************************************
-        // let label = format!("{}{}", pack_ampere[index_bl] as u16, "%");
-        let label = format!("{} mA", app.bl_pack_ampere as u16);
-        let pack_amp = Gauge::default()
-            .block(chunk_style(" Pack Current: "))
-            .gauge_style(Style::default().fg(amp_style[index_bl]).bg(Color::Black).add_modifier(Modifier::ITALIC))
-            .percent((pack_ampere[index_bl] as i32).try_into().unwrap())
-            .label(label)
-            .use_unicode(true);
-        f.render_widget(pack_amp, bl_chunk[1]);
+        //PACK INFO ************************************************
+        let bl_msg = Paragraph::new(pack_info(vec![app.bl_pack_voltage, app.bl_pack_ampere as u32]))
+            .style(Style::default())
+            .alignment(Alignment::Left);
+        f.render_widget(bl_msg, bl_chunk[1]);
 
         //CELL VOLTAGES
         let bl_msg = Paragraph::new(bl_cell.clone())
@@ -280,26 +243,21 @@ pub fn draw_ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<
             .margin(1)
             .split(chunk0[index_br]);
 
-        //PACK VOLTAGE ************************************************
-        let label = format!("{}% | {}mV", pack_voltage[index_br] as u16, app.br_pack_voltage);
+        //BATTERY  ************************************************
+        let label = format!("{}{}", pack_voltage[index_br] as u16, "%");
         let pack_volt = Gauge::default()
-            .block(chunk_style(" Pack Voltage: "))
+            .block(chunk_style(""))
             .gauge_style(Style::default().fg(volt_style[index_br]).bg(Color::Black).add_modifier(Modifier::ITALIC))
             .percent((pack_voltage[index_br] as i32).try_into().unwrap())
             .label(label)
             .use_unicode(true);
         f.render_widget(pack_volt, br_chunk[0]);
 
-        //PACK CURRENT ************************************************
-        // let label = format!("{}{}", pack_ampere[index_br] as u16, "%");
-        let label = format!("{} mA", app.br_pack_ampere as u16);
-        let pack_amp = Gauge::default()
-            .block(chunk_style(" Pack Current: "))
-            .gauge_style(Style::default().fg(amp_style[index_br]).bg(Color::Black).add_modifier(Modifier::ITALIC))
-            .percent((pack_ampere[index_br] as i32).try_into().unwrap())
-            .label(label)
-            .use_unicode(true);
-        f.render_widget(pack_amp, br_chunk[1]);
+        //PACK INFO ************************************************
+        let br_msg = Paragraph::new(pack_info(vec![app.br_pack_voltage, app.br_pack_ampere as u32]))
+            .style(Style::default())
+            .alignment(Alignment::Left);
+        f.render_widget(br_msg, br_chunk[1]);
 
         //CELL VOLTAGES
         let tr_msg = Paragraph::new(br_cell.clone())
@@ -317,30 +275,45 @@ fn map_range(from_range: (f64, f64), to_range: (f64, f64), s: f64) -> f64 {
     value
 }
 
-fn cell_data<'a>(cell_voltage: Vec<u32>, count: u32) -> Vec<Spans<'a>> {
+fn cell_data<'a>(cell_voltage: Vec<u32>, count: u32, pack_voltage: u32) -> Vec<Spans<'a>> {
     let mut cell = Vec::new();
     let mut colour_code = Color::Gray;
-    let low_cell_voltage = 1500;        //min cell voltage to say that it is low voltage 
+    let low_cell_voltage = 1500;    
 
     for j in 0..cell_voltage.len() {
-        if cell_voltage[j] < low_cell_voltage {
-            if count % 2 == 0 {
-                colour_code = Color::Red; 
+        if pack_voltage < 20 {
+            if cell_voltage[j] < low_cell_voltage {
+                if count % 2 == 0 {
+                    colour_code = Color::Red; 
+                } else {
+                    colour_code = Color::Black; 
+                }
             } else {
-                colour_code = Color::Black; 
+                colour_code = Color::Gray;   
             }
-            
         } else {
             colour_code = Color::Gray;   
         }
         cell.push(Spans::from(Span::styled(format!(" Cell{}: {}", j+1, cell_voltage[j]), 
         Style::default().fg(colour_code).add_modifier(Modifier::ITALIC))));   
     }
-
     cell
 }
 
-pub fn sleep(millis: u64) {
-    let duration = time::Duration::from_millis(millis);
-    thread::sleep(duration);
+fn pack_info<'a>(cell_voltage: Vec<u32>) -> Vec<Spans<'a>> {
+    let mut cell = Vec::new();
+    let mut colour_code = Color::Gray;
+    let mut text = "";
+    let mut unit = "";
+    for j in 0..cell_voltage.len() {
+        match j {
+            0 => { text = "Voltage"; unit = "mV"; },
+            1 => { text = "Current"; unit = "mA"; },
+            _ => { },
+        }
+
+        cell.push(Spans::from(Span::styled(format!(" {}: {} {}", text, cell_voltage[j], unit), 
+        Style::default().fg(colour_code).add_modifier(Modifier::ITALIC))));   
+    }
+    cell
 }

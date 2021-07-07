@@ -36,11 +36,11 @@ impl<'a> App<'a> {
             tr_pack_ampere: 4000,
             tr_cell_voltages: Vec::new(),
 
-            bl_pack_voltage: 1000,
+            bl_pack_voltage: 12200,
             bl_pack_ampere: 3500,
             bl_cell_voltages: [1000, 1200, 1300, 1400, 5000, 1000].to_vec(),
 
-            br_pack_voltage: 0,
+            br_pack_voltage: 12050,
             br_pack_ampere: 0,
             br_cell_voltages: [1000, 1200, 500, 3000].to_vec(),
 
