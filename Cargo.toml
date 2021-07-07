@@ -1,0 +1,9 @@
+[package]
+name = "ctui"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+tui = "0.14.0"
+termion =  "^1.5"
+chrono = "0.4"
